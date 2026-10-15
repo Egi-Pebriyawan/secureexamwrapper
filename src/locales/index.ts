@@ -286,3 +286,4 @@ export const translations = {
     table_review_status: 'Review Status',
   },
 }
+

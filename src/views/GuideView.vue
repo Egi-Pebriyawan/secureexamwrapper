@@ -100,3 +100,4 @@ const i18n = useI18nStore()
     </footer>
   </div>
 </template>
+

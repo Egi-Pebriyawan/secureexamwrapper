@@ -50,22 +50,42 @@ const handleCreateExam = async () => {
     loading.value = true
     errorMessage.value = ''
 
+    // Ensure user is logged in
+    const { data: userData } = await supabase.auth.getUser()
+    const currentUser = userData?.user || authStore.user
+
+    if (!currentUser) {
+      throw new Error('Sesi login telah berakhir atau Anda belum login. Silakan login kembali.')
+    }
+
     const { count, error: countErr } = await supabase
       .from('exams')
       .select('*', { count: 'exact', head: true })
       .in('status', ['draft', 'scheduled', 'ongoing'])
 
-    if (countErr) throw countErr
+    if (countErr) {
+      console.error('Count exams error:', countErr)
+      throw countErr
+    }
     if (count !== null && count >= 5) {
       throw new Error('Batas akun tercapai: Maksimal 5 ujian aktif.')
     }
+
+    // Ensure organizer profile exists in public.organizers table
+    await supabase
+      .from('organizers')
+      .upsert({
+        id: currentUser.id,
+        email: currentUser.email || 'organizer@exam.local',
+        full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'Organizer',
+      }, { onConflict: 'id' })
 
     const tokenHashed = await hashToken(token.value)
 
     const { data, error } = await supabase
       .from('exams')
       .insert({
-        organizer_id: authStore.user?.id,
+        organizer_id: currentUser.id,
         title: title.value,
         form_url: normalizedUrl.value,
         code: code.value.toUpperCase().trim(),
@@ -80,11 +100,15 @@ const handleCreateExam = async () => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Supabase Exam Insert Error:', error)
+      throw error
+    }
 
     router.push(`/dashboard/exams/${data.id}`)
   } catch (err: any) {
-    errorMessage.value = err.message || 'Gagal membuat ujian'
+    console.error('Create Exam Error:', err)
+    errorMessage.value = err.message || err.error_description || JSON.stringify(err) || 'Gagal membuat ujian'
   } finally {
     loading.value = false
   }

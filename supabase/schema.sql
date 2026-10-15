@@ -129,33 +129,20 @@ CREATE POLICY "Organizers manage their exams"
 ON public.exams FOR ALL
 USING (auth.uid() = organizer_id);
 
--- Supervisors can read exams they supervise
-CREATE POLICY "Supervisors can view assigned exams"
-ON public.exams FOR SELECT
-USING (
-    EXISTS (
-        SELECT 1 FROM public.supervisors
-        WHERE supervisors.exam_id = exams.id AND supervisors.user_id = auth.uid()
-    )
-);
-
 -- Anonymous / Participants can view public exam metadata (status, code, title, duration) to join
 CREATE POLICY "Public can view basic exam info by code"
 ON public.exams FOR SELECT
-TO anon
+TO anon, authenticated
 USING (status IN ('scheduled', 'ongoing', 'draft'));
 
 -- PARTICIPANTS:
--- Organizers and Supervisors can read/write participants of their exams
-CREATE POLICY "Organizers and supervisors view participants"
+CREATE POLICY "Organizers view participants"
 ON public.participants FOR ALL
 USING (
     EXISTS (
         SELECT 1 FROM public.exams
         WHERE exams.id = participants.exam_id
-          AND (exams.organizer_id = auth.uid() OR EXISTS (
-              SELECT 1 FROM public.supervisors WHERE supervisors.exam_id = exams.id AND supervisors.user_id = auth.uid()
-          ))
+          AND exams.organizer_id = auth.uid()
     )
 );
 
@@ -171,17 +158,14 @@ TO anon
 USING (true);
 
 -- SESSIONS:
--- Organizers and Supervisors can view sessions
-CREATE POLICY "Organizers and supervisors view sessions"
+CREATE POLICY "Organizers view sessions"
 ON public.sessions FOR ALL
 USING (
     EXISTS (
         SELECT 1 FROM public.participants
         JOIN public.exams ON exams.id = participants.exam_id
         WHERE participants.id = sessions.participant_id
-          AND (exams.organizer_id = auth.uid() OR EXISTS (
-              SELECT 1 FROM public.supervisors WHERE supervisors.exam_id = exams.id AND supervisors.user_id = auth.uid()
-          ))
+          AND exams.organizer_id = auth.uid()
     )
 );
 
@@ -192,7 +176,7 @@ TO anon
 USING (true);
 
 -- EVENTS:
-CREATE POLICY "Organizers and supervisors view events"
+CREATE POLICY "Organizers view events"
 ON public.events FOR SELECT
 USING (
     EXISTS (
@@ -200,9 +184,7 @@ USING (
         JOIN public.participants ON participants.id = sessions.participant_id
         JOIN public.exams ON exams.id = participants.exam_id
         WHERE sessions.id = events.session_id
-          AND (exams.organizer_id = auth.uid() OR EXISTS (
-              SELECT 1 FROM public.supervisors WHERE supervisors.exam_id = exams.id AND supervisors.user_id = auth.uid()
-          ))
+          AND exams.organizer_id = auth.uid()
     )
 );
 
@@ -212,7 +194,7 @@ TO anon
 WITH CHECK (true);
 
 -- UNLOCK REQUESTS:
-CREATE POLICY "Organizers and supervisors manage unlock requests"
+CREATE POLICY "Organizers manage unlock requests"
 ON public.unlock_requests FOR ALL
 USING (
     EXISTS (
@@ -220,9 +202,7 @@ USING (
         JOIN public.participants ON participants.id = sessions.participant_id
         JOIN public.exams ON exams.id = participants.exam_id
         WHERE sessions.id = unlock_requests.session_id
-          AND (exams.organizer_id = auth.uid() OR EXISTS (
-              SELECT 1 FROM public.supervisors WHERE supervisors.exam_id = exams.id AND supervisors.user_id = auth.uid()
-          ))
+          AND exams.organizer_id = auth.uid()
     )
 );
 

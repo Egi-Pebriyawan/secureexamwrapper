@@ -16,3 +16,4 @@ const i18n = useI18nStore()
     <span>{{ i18n.currentLang === 'id' ? 'ID (INDONESIA)' : 'EN (ENGLISH)' }}</span>
   </BrButton>
 </template>
+
