@@ -38,3 +38,4 @@ const bgClasses = computed(() => {
     </div>
   </div>
 </template>
+

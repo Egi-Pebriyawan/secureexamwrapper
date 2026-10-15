@@ -119,3 +119,4 @@ const handleJoin = () => {
     </footer>
   </div>
 </template>
+

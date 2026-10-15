@@ -55,3 +55,4 @@ const dotColor = computed(() => {
     <slot />
   </span>
 </template>
+
