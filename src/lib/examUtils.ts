@@ -43,3 +43,4 @@ export function generateExamCode(): string {
   }
   return code
 }
+

@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useI18nStore } from '@/stores/i18n'
 import BrCard from '@/components/ui/BrCard.vue'
 import BrButton from '@/components/ui/BrButton.vue'
 import BrInput from '@/components/ui/BrInput.vue'
 import BrBadge from '@/components/ui/BrBadge.vue'
+import BrLangSwitch from '@/components/ui/BrLangSwitch.vue'
 
 const authStore = useAuthStore()
+const i18n = useI18nStore()
 
 const email = ref('')
 const loading = ref(false)
@@ -22,7 +25,7 @@ const handleEmailLogin = async () => {
     if (error) throw error
     magicLinkSent.value = true
   } catch (err: any) {
-    errorMessage.value = err.message || 'Gagal mengirim magic link'
+    errorMessage.value = err.message || 'Gagal mengirim link login'
   } finally {
     loading.value = false
   }
@@ -35,35 +38,39 @@ const handleGoogleLogin = async () => {
     const { error } = await authStore.signInWithOAuth('google')
     if (error) throw error
   } catch (err: any) {
-    errorMessage.value = err.message || 'Gagal login via Google'
+    errorMessage.value = `${err.message || 'Gagal login via Google'}. (${i18n.t('google_not_enabled_hint')})`
     loading.value = false
   }
 }
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col justify-center items-center p-6">
+  <div class="min-h-screen flex flex-col justify-center items-center p-6 relative">
+    <div class="absolute top-6 right-6">
+      <BrLangSwitch />
+    </div>
+
     <div class="w-full max-w-md space-y-6">
       <div class="text-center space-y-2">
         <router-link to="/" class="inline-flex items-center gap-2 mb-2">
           <div class="w-7 h-7 bg-blue border-[2px] border-ink flex items-center justify-center text-white font-heading font-black text-sm">
             S
           </div>
-          <span class="font-heading font-black tracking-tight text-lg">SECURE EXAM</span>
+          <span class="font-heading font-black tracking-tight text-lg">{{ i18n.t('app_title') }}</span>
         </router-link>
-        <h1 class="text-3xl font-black uppercase">LOGIN PENYELENGGARA</h1>
-        <p class="font-mono text-xs text-ink-soft">Masuk untuk membuat dan mengelola ujian aman</p>
+        <h1 class="text-3xl font-black uppercase">{{ i18n.t('login_title') }}</h1>
+        <p class="font-mono text-xs text-ink-soft">{{ i18n.t('login_subtitle') }}</p>
       </div>
 
       <BrCard>
         <div v-if="magicLinkSent" class="space-y-4 text-center py-4">
-          <BrBadge variant="lime">MAGIC LINK TERKIRIM</BrBadge>
-          <h2 class="text-xl font-black">PERIKSA INBOX EMAIL ANDA</h2>
+          <BrBadge variant="lime">{{ i18n.t('magic_link_sent') }}</BrBadge>
+          <h2 class="text-xl font-black">{{ i18n.t('check_email_title') }}</h2>
           <p class="text-sm text-ink-soft">
-            Tautan masuk telah dikirimkan ke <strong class="text-ink">{{ email }}</strong>. Buka tautan tersebut untuk langsung masuk ke dasbor.
+            {{ i18n.t('check_email_desc', { email }) }}
           </p>
           <BrButton variant="secondary" block size="sm" @click="magicLinkSent = false">
-            Gunakan Email Lain
+            {{ i18n.t('use_another_email') }}
           </BrButton>
         </div>
 
@@ -81,12 +88,12 @@ const handleGoogleLogin = async () => {
               <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
               <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
             </svg>
-            MASUK DENGAN GOOGLE
+            {{ i18n.t('login_with_google') }}
           </BrButton>
 
           <div class="flex items-center gap-3">
             <div class="h-[2px] bg-ink flex-1"></div>
-            <span class="font-mono text-xs font-bold uppercase text-ink-soft">ATAU EMAIL</span>
+            <span class="font-mono text-xs font-bold uppercase text-ink-soft">{{ i18n.t('or_email') }}</span>
             <div class="h-[2px] bg-ink flex-1"></div>
           </div>
 
@@ -94,8 +101,8 @@ const handleGoogleLogin = async () => {
             <BrInput
               v-model="email"
               type="email"
-              label="Email Penyelenggara"
-              placeholder="nama@sekolah.sch.id"
+              :label="i18n.t('email_label')"
+              :placeholder="i18n.t('email_placeholder')"
               :error="errorMessage"
               required
             />
@@ -107,14 +114,14 @@ const handleGoogleLogin = async () => {
               size="lg"
               :disabled="loading"
             >
-              {{ loading ? 'MENGIRIM LINK...' : 'KIRIM MAGIC LINK' }}
+              {{ loading ? i18n.t('sending_login_link') : i18n.t('send_login_link') }}
             </BrButton>
           </form>
         </div>
       </BrCard>
 
       <div class="text-center font-mono text-xs">
-        <router-link to="/" class="hover:underline text-ink-soft">← KEMBALI KE BERANDA</router-link>
+        <router-link to="/" class="hover:underline text-ink-soft">← {{ i18n.t('back_to_home') }}</router-link>
       </div>
     </div>
   </div>

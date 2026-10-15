@@ -33,3 +33,4 @@ export function isIosSafari(): boolean {
   const ua = navigator.userAgent
   return (ua.includes('iPhone') || ua.includes('iPad')) && ua.includes('Safari') && !ua.includes('Chrome')
 }
+

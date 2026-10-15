@@ -2,15 +2,18 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18nStore } from '@/stores/i18n'
 import { supabase } from '@/lib/supabase'
 import BrButton from '@/components/ui/BrButton.vue'
 import BrCard from '@/components/ui/BrCard.vue'
 import BrBadge from '@/components/ui/BrBadge.vue'
 import BrChip from '@/components/ui/BrChip.vue'
 import BrStatCard from '@/components/ui/BrStatCard.vue'
+import BrLangSwitch from '@/components/ui/BrLangSwitch.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const i18n = useI18nStore()
 
 interface Exam {
   id: string
@@ -65,17 +68,18 @@ onMounted(() => {
             <div class="w-8 h-8 bg-blue border-[3px] border-ink flex items-center justify-center text-white font-heading font-black text-lg">
               S
             </div>
-            <span class="font-heading font-black text-xl tracking-tight uppercase">SECURE EXAM</span>
+            <span class="font-heading font-black text-xl tracking-tight uppercase">{{ i18n.t('app_title') }}</span>
           </router-link>
-          <BrBadge variant="ink">DASBOR</BrBadge>
+          <BrBadge variant="ink">{{ i18n.t('dashboard') }}</BrBadge>
         </div>
 
         <div class="flex items-center gap-4">
+          <BrLangSwitch />
           <span class="font-mono text-xs hidden sm:inline text-ink-soft">
             {{ authStore.user?.email }}
           </span>
           <BrButton size="sm" variant="secondary" @click="handleSignOut">
-            KELUAR
+            {{ i18n.t('logout') }}
           </BrButton>
         </div>
       </div>
@@ -85,15 +89,15 @@ onMounted(() => {
       <!-- Title & CTA -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-[3px] border-ink pb-6">
         <div>
-          <h1 class="text-3xl sm:text-4xl font-black uppercase">MANAJEMEN UJIAN</h1>
+          <h1 class="text-3xl sm:text-4xl font-black uppercase">{{ i18n.t('exam_management') }}</h1>
           <p class="font-mono text-xs text-ink-soft mt-1">
-            Batas akun MVP: Maksimal 5 ujian aktif, 200 peserta per sesi.
+            {{ i18n.t('dashboard_subtitle') }}
           </p>
         </div>
         <div>
           <router-link to="/dashboard/exams/new">
             <BrButton variant="primary" size="md">
-              + BUAT UJIAN BARU
+              {{ i18n.t('create_exam_btn') }}
             </BrButton>
           </router-link>
         </div>
@@ -103,36 +107,36 @@ onMounted(() => {
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <BrStatCard
           :value="exams.length"
-          label="TOTAL UJIAN"
-          sublabel="Tercatat dalam akun Anda"
+          :label="i18n.t('total_exams')"
+          :sublabel="i18n.t('total_exams_sub')"
           variant="white"
         />
         <BrStatCard
           :value="exams.filter(e => e.status === 'ongoing').length"
-          label="SEDANG BERLANGSUNG"
-          sublabel="Peserta aktif mengerjakan"
+          :label="i18n.t('ongoing_exams')"
+          :sublabel="i18n.t('ongoing_exams_sub')"
           variant="lime"
         />
         <BrStatCard
           :value="exams.filter(e => e.status === 'finished').length"
-          label="SELESAI"
-          sublabel="Laporan siap diunduh"
+          :label="i18n.t('finished_exams')"
+          :sublabel="i18n.t('finished_exams_sub')"
           variant="cream"
         />
       </div>
 
       <!-- Exam List -->
       <section class="space-y-4">
-        <h2 class="text-xl font-black uppercase">DAFTAR UJIAN ANDA</h2>
+        <h2 class="text-xl font-black uppercase">{{ i18n.t('your_exam_list') }}</h2>
 
         <div v-if="loading" class="text-center py-12 font-mono text-sm">
-          MEMUAT DATA UJIAN...
+          {{ i18n.t('loading') }}
         </div>
 
         <div v-else-if="exams.length === 0" class="border-[3px] border-ink bg-white p-12 text-center shadow-[4px_4px_0px_0px_#0A0A0A] space-y-4">
-          <div class="font-mono text-sm text-ink-soft">Belum ada ujian yang dibuat.</div>
+          <div class="font-mono text-sm text-ink-soft">{{ i18n.t('empty_exams') }}</div>
           <router-link to="/dashboard/exams/new">
-            <BrButton variant="primary">BUAT UJIAN PERTAMA</BrButton>
+            <BrButton variant="primary">{{ i18n.t('create_first_exam') }}</BrButton>
           </router-link>
         </div>
 
@@ -145,15 +149,15 @@ onMounted(() => {
             <div class="space-y-2">
               <div class="flex items-center gap-3">
                 <span class="font-mono text-xs font-black bg-ink text-white px-2 py-0.5 border border-ink">
-                  KODE: {{ exam.code }}
+                  CODE: {{ exam.code }}
                 </span>
                 <BrChip :status="exam.status" />
               </div>
               <h3 class="text-2xl font-black uppercase">{{ exam.title }}</h3>
               <div class="flex flex-wrap items-center gap-4 font-mono text-xs text-ink-soft">
-                <span>⏱ Durasi: {{ exam.duration_min }} Menit</span>
+                <span>⏱ {{ i18n.t('duration_label') }}: {{ exam.duration_min }} {{ i18n.t('minutes_label') }}</span>
                 <span>•</span>
-                <span>🛡 Toleransi: {{ exam.tolerance }}x</span>
+                <span>🛡 {{ i18n.t('tolerance_label') }}: {{ exam.tolerance }}x</span>
                 <span>•</span>
                 <span class="truncate max-w-xs">{{ exam.form_url }}</span>
               </div>
@@ -161,10 +165,10 @@ onMounted(() => {
 
             <div class="flex items-center gap-2">
               <router-link :to="`/dashboard/exams/${exam.id}`">
-                <BrButton variant="secondary" size="sm">DETAIL & PESERTA</BrButton>
+                <BrButton variant="secondary" size="sm">{{ i18n.t('detail_participants_btn') }}</BrButton>
               </router-link>
               <router-link :to="`/dashboard/exams/${exam.id}/report`">
-                <BrButton variant="lime" size="sm">LAPORAN</BrButton>
+                <BrButton variant="lime" size="sm">{{ i18n.t('report_btn') }}</BrButton>
               </router-link>
             </div>
           </BrCard>

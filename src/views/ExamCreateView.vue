@@ -2,15 +2,18 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18nStore } from '@/stores/i18n'
 import { supabase } from '@/lib/supabase'
 import { normalizeFormUrl, hashToken, generateExamCode } from '@/lib/examUtils'
 import BrButton from '@/components/ui/BrButton.vue'
 import BrCard from '@/components/ui/BrCard.vue'
 import BrInput from '@/components/ui/BrInput.vue'
 import BrBadge from '@/components/ui/BrBadge.vue'
+import BrLangSwitch from '@/components/ui/BrLangSwitch.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const i18n = useI18nStore()
 
 const title = ref('')
 const rawFormUrl = ref('')
@@ -47,7 +50,6 @@ const handleCreateExam = async () => {
     loading.value = true
     errorMessage.value = ''
 
-    // Check limit of 5 active exams (EX-06)
     const { count, error: countErr } = await supabase
       .from('exams')
       .select('*', { count: 'exact', head: true })
@@ -55,7 +57,7 @@ const handleCreateExam = async () => {
 
     if (countErr) throw countErr
     if (count !== null && count >= 5) {
-      throw new Error('Batas akun tercapai: Maksimal 5 ujian aktif (Draf/Terjadwal/Berlangsung).')
+      throw new Error('Batas akun tercapai: Maksimal 5 ujian aktif.')
     }
 
     const tokenHashed = await hashToken(token.value)
@@ -94,31 +96,21 @@ const handleCreateExam = async () => {
     <div class="flex items-center justify-between border-b-[3px] border-ink pb-6">
       <div>
         <div class="flex items-center gap-2 mb-2">
-          <BrBadge variant="blue">EX-01</BrBadge>
-          <BrBadge variant="lime">FORMULIR</BrBadge>
+          <BrBadge variant="blue">{{ i18n.t('app_title') }}</BrBadge>
         </div>
-        <h1 class="text-3xl sm:text-4xl font-black uppercase">BUAT UJIAN BARU</h1>
+        <h1 class="text-3xl sm:text-4xl font-black uppercase">{{ i18n.t('create_new_exam') }}</h1>
       </div>
-      <router-link to="/dashboard">
-        <BrButton variant="secondary" size="sm">BATAL & KEMBALI</BrButton>
-      </router-link>
+      <div class="flex items-center gap-3">
+        <BrLangSwitch />
+        <router-link to="/dashboard">
+          <BrButton variant="secondary" size="sm">{{ i18n.t('cancel') }}</BrButton>
+        </router-link>
+      </div>
     </div>
 
     <!-- Alert error -->
     <div v-if="errorMessage" class="border-[3px] border-danger bg-red-100 p-4 text-danger font-mono text-xs font-bold shadow-[4px_4px_0px_0px_#E5322D]">
       {{ errorMessage }}
-    </div>
-
-    <!-- Organizer Guidance EX-05 -->
-    <div class="border-[3px] border-ink bg-ink text-white p-5 shadow-[4px_4px_0px_0px_#0A0A0A] space-y-2">
-      <div class="flex items-center gap-2">
-        <BrBadge variant="lime">PANDUAN PENYELENGGARA (EX-05)</BrBadge>
-      </div>
-      <p class="text-sm font-sans text-neutral-300">
-        • Pastikan form <strong>tidak mewajibkan login Google</strong> agar peserta tidak terblokir di browser Safari / mode privat.<br />
-        • Aktifkan acak urutan soal langsung di pengaturan Google Form Anda.<br />
-        • Berikan durasi buka-tutup sedikit lebih longgar dibanding durasi pengerjaan peserta.
-      </p>
     </div>
 
     <form @submit.prevent="handleCreateExam" class="space-y-6">
@@ -128,20 +120,20 @@ const handleCreateExam = async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <BrInput
             v-model="title"
-            label="Judul Ujian"
-            placeholder="Misal: Ujian Akhir Semester Fisika 2026"
+            :label="i18n.t('exam_title')"
+            :placeholder="i18n.t('exam_title_placeholder')"
             required
           />
           <div class="flex gap-2 items-end">
             <BrInput
               v-model="code"
-              label="Kode Ujian (6 Karakter Unik)"
+              :label="i18n.t('exam_code_label')"
               placeholder="MAT101"
               mono
               required
             />
             <BrButton type="button" variant="secondary" size="md" @click="code = generateExamCode()" class="h-12">
-              ACAK
+              {{ i18n.t('randomize_code') }}
             </BrButton>
           </div>
         </div>
@@ -149,17 +141,17 @@ const handleCreateExam = async () => {
         <div class="space-y-2">
           <BrInput
             v-model="rawFormUrl"
-            label="Link Form Eksternal (Google Form / Tally)"
-            placeholder="https://docs.google.com/forms/d/e/.../viewform"
+            :label="i18n.t('form_link_label')"
+            :placeholder="i18n.t('form_link_placeholder')"
             required
           />
           <div class="flex items-center justify-between text-xs font-mono text-ink-soft">
             <span v-if="normalizedUrl !== rawFormUrl" class="text-blue font-bold">
-              Link dinormalisasi: {{ normalizedUrl }}
+              Link: {{ normalizedUrl }}
             </span>
             <span v-else>Link siap digunakan</span>
             <button type="button" @click="handleTestPreview" class="underline font-bold text-ink cursor-pointer hover:text-blue">
-              🔍 UJI TAMPIL (EX-04)
+              {{ i18n.t('test_preview_btn') }}
             </button>
           </div>
         </div>
@@ -168,11 +160,8 @@ const handleCreateExam = async () => {
         <div v-if="previewTesting" class="border-[3px] border-ink p-4 bg-neutral-100 space-y-3">
           <div class="flex items-center justify-between font-mono text-xs font-bold">
             <span>HASIL UJI TAMPIL IFRAME:</span>
-            <button type="button" @click="previewTesting = false" class="text-danger underline">TUTUP PENGUJIAN</button>
+            <button type="button" @click="previewTesting = false" class="text-danger underline">TUTUP</button>
           </div>
-          <p class="text-xs text-ink-soft">
-            Jika iframe di bawah menampilkan form dengan baik, form siap digunakan. Jika kosong atau muncul pesan error domain menolak iframe, matikan proteksi X-Frame di provider form.
-          </p>
           <div class="border-[2px] border-ink h-80 bg-white relative">
             <iframe :src="previewUrl" class="w-full h-full border-none" />
           </div>
@@ -181,7 +170,7 @@ const handleCreateExam = async () => {
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <BrInput
             v-model="token"
-            label="Token Ujian Bawaan"
+            :label="i18n.t('default_token_label')"
             placeholder="123456"
             mono
             required
@@ -189,14 +178,14 @@ const handleCreateExam = async () => {
           <BrInput
             v-model="durationMin"
             type="number"
-            label="Durasi Pengerjaan (Menit)"
+            :label="i18n.t('exam_duration_label')"
             required
           />
           <BrInput
             v-model="tolerance"
             type="number"
-            label="Toleransi Pelanggaran (0-3)"
-            helpText="0 = Kunci langsung, 1 = Bawaan (1 peringatan)"
+            :label="i18n.t('tolerance_setting_label')"
+            :helpText="i18n.t('tolerance_help')"
             required
           />
         </div>
@@ -205,13 +194,13 @@ const handleCreateExam = async () => {
           <BrInput
             v-model="opensAt"
             type="datetime-local"
-            label="Jam Buka Ujian"
+            :label="i18n.t('opens_at_label')"
             required
           />
           <BrInput
             v-model="closesAt"
             type="datetime-local"
-            label="Jam Tutup Ujian"
+            :label="i18n.t('closes_at_label')"
             required
           />
         </div>
@@ -219,10 +208,10 @@ const handleCreateExam = async () => {
 
       <div class="flex justify-end gap-4">
         <router-link to="/dashboard">
-          <BrButton variant="secondary" size="lg">BATAL</BrButton>
+          <BrButton variant="secondary" size="lg">{{ i18n.t('cancel') }}</BrButton>
         </router-link>
         <BrButton type="submit" variant="primary" size="lg" :disabled="loading">
-          {{ loading ? 'MENYIMPAN...' : 'SIMPAN & LANJUT KE DAFTAR PESERTA' }}
+          {{ loading ? i18n.t('loading') : i18n.t('save_and_continue_btn') }}
         </BrButton>
       </div>
     </form>
