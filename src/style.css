@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #F0EEE3;
+  --color-ink: #0A0A0A;
+  --color-ink-soft: #4A4A4A;
+  --color-blue: #2B2BE0;
+  --color-lime: #D9F94A;
+  --color-white: #FFFFFF;
+  --color-danger: #E5322D;
+  --color-ok: #1FA463;
+
+  --font-heading: 'Archivo', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', sans-serif;
+
+  --shadow-brutal: 4px 4px 0px 0px #0A0A0A;
+  --shadow-brutal-sm: 2px 2px 0px 0px #0A0A0A;
+  --shadow-brutal-lg: 6px 6px 0px 0px #0A0A0A;
+}
+
+@layer base {
+  body {
+    background-color: #F0EEE3;
+    color: #0A0A0A;
+    font-family: var(--font-sans);
+    background-image: radial-gradient(#0A0A0A 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: 0 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Neo-Brutalism helpers */
+.brutal-border {
+  border: 3px solid #0A0A0A;
+}
+
+.brutal-border-sm {
+  border: 2px solid #0A0A0A;
+}
+
+.brutal-shadow {
+  box-shadow: 4px 4px 0px 0px #0A0A0A;
+}
+
+.brutal-shadow-sm {
+  box-shadow: 2px 2px 0px 0px #0A0A0A;
+}
+
+.brutal-shadow-lg {
+  box-shadow: 6px 6px 0px 0px #0A0A0A;
+}
+
+.text-stroke {
+  -webkit-text-stroke: 2px #0A0A0A;
+  color: transparent;
+}
+
+@media (max-width: 640px) {
+  .brutal-border {
+    border-width: 2px;
+  }
+  .brutal-shadow {
+    box-shadow: 3px 3px 0px 0px #0A0A0A;
+  }
+}
