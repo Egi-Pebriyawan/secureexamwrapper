@@ -89,6 +89,11 @@ export const translations = {
     tolerance_label: 'Toleransi',
     detail_participants_btn: 'DETAIL & PESERTA',
     report_btn: 'LAPORAN',
+    edit_btn: 'EDIT',
+    delete_btn: 'HAPUS',
+    delete_confirm_title: 'HAPUS UJIAN?',
+    delete_confirm_desc: 'Apakah Anda yakin ingin menghapus ujian "{title}"? Semua data peserta, sesi, dan log pelanggaran akan dihapus permanen.',
+    exam_schedule_time: 'Jadwal: {from} s/d {to}',
 
     // Exam Create
     create_new_exam: 'BUAT UJIAN BARU',
@@ -231,6 +236,11 @@ export const translations = {
     tolerance_label: 'Tolerance',
     detail_participants_btn: 'DETAILS & PARTICIPANTS',
     report_btn: 'REPORT',
+    edit_btn: 'EDIT',
+    delete_btn: 'DELETE',
+    delete_confirm_title: 'DELETE EXAM?',
+    delete_confirm_desc: 'Are you sure you want to delete exam "{title}"? All participants, sessions, and violation logs will be permanently deleted.',
+    exam_schedule_time: 'Schedule: {from} to {to}',
 
     // Exam Create
     create_new_exam: 'CREATE NEW EXAM',

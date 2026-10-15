@@ -6,7 +6,6 @@ import { useI18nStore } from '@/stores/i18n'
 import { supabase } from '@/lib/supabase'
 import BrButton from '@/components/ui/BrButton.vue'
 import BrCard from '@/components/ui/BrCard.vue'
-import BrBadge from '@/components/ui/BrBadge.vue'
 import BrChip from '@/components/ui/BrChip.vue'
 import BrStatCard from '@/components/ui/BrStatCard.vue'
 import BrLangSwitch from '@/components/ui/BrLangSwitch.vue'
@@ -30,6 +29,8 @@ interface Exam {
 
 const exams = ref<Exam[]>([])
 const loading = ref(true)
+const examToDelete = ref<Exam | null>(null)
+const deleting = ref(false)
 
 const fetchExams = async () => {
   try {
@@ -48,6 +49,49 @@ const fetchExams = async () => {
   }
 }
 
+const formatSchedule = (opensAt: string, closesAt: string) => {
+  if (!opensAt || !closesAt) return '-'
+  const d1 = new Date(opensAt)
+  const d2 = new Date(closesAt)
+  
+  const dateStr = d1.toLocaleDateString(i18n.currentLang === 'id' ? 'id-ID' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  })
+
+  const t1 = d1.toLocaleTimeString(i18n.currentLang === 'id' ? 'id-ID' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+  const t2 = d2.toLocaleTimeString(i18n.currentLang === 'id' ? 'id-ID' : 'en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  return `${dateStr}, ${t1} - ${t2}`
+}
+
+const handleDeleteExam = async () => {
+  if (!examToDelete.value) return
+  try {
+    deleting.value = true
+    const { error } = await supabase
+      .from('exams')
+      .delete()
+      .eq('id', examToDelete.value.id)
+
+    if (error) throw error
+
+    exams.value = exams.value.filter(e => e.id !== examToDelete.value?.id)
+    examToDelete.value = null
+  } catch (err: any) {
+    alert(err.message || 'Gagal menghapus ujian')
+  } finally {
+    deleting.value = false
+  }
+}
+
 const handleSignOut = async () => {
   await authStore.signOut()
   router.push('/login')
@@ -60,7 +104,7 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <!-- Organizer Topbar -->
+    <!-- Organizer Topbar (No bullet/dashboard badge beside title) -->
     <header class="border-b-[3px] border-ink bg-white sticky top-0 z-40">
       <div class="max-w-6xl mx-auto px-6 h-18 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -70,7 +114,6 @@ onMounted(() => {
             </div>
             <span class="font-heading font-black text-xl tracking-tight uppercase">{{ i18n.t('app_title') }}</span>
           </router-link>
-          <BrBadge variant="ink">{{ i18n.t('dashboard') }}</BrBadge>
         </div>
 
         <div class="flex items-center gap-4">
@@ -144,14 +187,17 @@ onMounted(() => {
           <BrCard
             v-for="exam in exams"
             :key="exam.id"
-            class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:translate-x-[2px] transition-transform"
+            class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 hover:translate-x-[2px] transition-transform"
           >
-            <div class="space-y-2">
-              <div class="flex items-center gap-3">
+            <div class="space-y-2 flex-1">
+              <div class="flex flex-wrap items-center gap-3">
                 <span class="font-mono text-xs font-black bg-ink text-white px-2 py-0.5 border border-ink">
                   CODE: {{ exam.code }}
                 </span>
                 <BrChip :status="exam.status" />
+                <span class="font-mono text-xs font-bold text-blue bg-blue/10 px-2 py-0.5 border border-blue">
+                  📅 {{ formatSchedule(exam.opens_at, exam.closes_at) }}
+                </span>
               </div>
               <h3 class="text-2xl font-black uppercase">{{ exam.title }}</h3>
               <div class="flex flex-wrap items-center gap-4 font-mono text-xs text-ink-soft">
@@ -163,17 +209,45 @@ onMounted(() => {
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Action buttons for CRUD -->
+            <div class="flex flex-wrap items-center gap-2">
               <router-link :to="`/dashboard/exams/${exam.id}`">
                 <BrButton variant="secondary" size="sm">{{ i18n.t('detail_participants_btn') }}</BrButton>
+              </router-link>
+              <router-link :to="`/dashboard/exams/${exam.id}/edit`">
+                <BrButton variant="secondary" size="sm">{{ i18n.t('edit_btn') }}</BrButton>
               </router-link>
               <router-link :to="`/dashboard/exams/${exam.id}/report`">
                 <BrButton variant="lime" size="sm">{{ i18n.t('report_btn') }}</BrButton>
               </router-link>
+              <BrButton variant="danger" size="sm" @click="examToDelete = exam">
+                {{ i18n.t('delete_btn') }}
+              </BrButton>
             </div>
           </BrCard>
         </div>
       </section>
     </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      v-if="examToDelete"
+      class="fixed inset-0 z-50 bg-ink/80 flex items-center justify-center p-4"
+    >
+      <BrCard class="max-w-md w-full space-y-4 text-ink">
+        <h3 class="text-2xl font-black uppercase text-danger">{{ i18n.t('delete_confirm_title') }}</h3>
+        <p class="text-sm text-ink-soft">
+          {{ i18n.t('delete_confirm_desc', { title: examToDelete.title }) }}
+        </p>
+        <div class="flex gap-2 justify-end pt-2">
+          <BrButton variant="secondary" size="md" @click="examToDelete = null" :disabled="deleting">
+            {{ i18n.t('cancel') }}
+          </BrButton>
+          <BrButton variant="danger" size="md" @click="handleDeleteExam" :disabled="deleting">
+            {{ deleting ? i18n.t('loading') : i18n.t('delete_btn') }}
+          </BrButton>
+        </div>
+      </BrCard>
+    </div>
   </div>
 </template>

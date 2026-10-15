@@ -47,6 +47,12 @@ export const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/dashboard/exams/:id/edit',
+      name: 'exam-edit',
+      component: () => import('@/views/ExamEditView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/dashboard/exams/:id/report',
       name: 'exam-report',
       component: ExamReportView,
